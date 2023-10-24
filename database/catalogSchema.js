@@ -1,6 +1,6 @@
 const { Schema, model } = require('mongoose');
 
-const catalogueSchema = new Schema ({
+const CatalogSchema = new Schema ({
     sellerId: {
         type: String,
         required: true,
@@ -12,6 +12,6 @@ const catalogueSchema = new Schema ({
     },
 })
 
-const CatalogueModel = model('catalogue', catalogueSchema);
+const CatalogModel = model('catalog', CatalogSchema);
 
-module.exports = { CatalogueModel };
+module.exports = { CatalogModel };

@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const { dbConnect } = require('./database/dbConnect');
 const auth = require('./routes/auth');
-// const public = require('./routes/public');
+const public = require('./routes/public');
 
 async function startServer() {
     try {
@@ -13,7 +13,7 @@ async function startServer() {
         app.use(express.json());
         
         app.use('/api/auth', auth);
-        // app.use('/api', public);
+        app.use('/api', public);
         
         
         app.listen(5000, () => {
