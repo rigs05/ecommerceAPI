@@ -14,6 +14,7 @@ router.post('/create-catalog', decodeToken, async (req, res) => {
         if (!verifySeller) {
             return res.status(400).json({ error: "The user is not a seller." });
         }
+        // checking if seller catalog exist in db, if no create new document, else update the previous one
         let sellerExist = await CatalogModel.findOne({ sellerId: seller_id });
         if (!sellerExist) {
             sellerExist = new CatalogModel({ sellerId: seller_id, products: items });
@@ -37,6 +38,7 @@ router.get('/orders', decodeToken, async (req, res) => {
         if (orderExist.length == 0) {
             return res.status(400).json({ message: "No pending orders." });
         } else {
+            // mapping all the orders by multiple users
             const ordersList = await orderExist.map((order) => {
                 if (order) {
                     const items = order.itemsList.map((item) => {

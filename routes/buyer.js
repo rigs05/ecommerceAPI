@@ -50,8 +50,10 @@ router.post('/create-order/:seller_id', decodeToken, async (req, res) => {
     try {
         const { seller_id } = req.params;
         const { userId, itemsList } = req.body;
+        // verifying the user and seller id from db
         const userExist = await UserModel.findOne({ userId: userId });
         const sellerExist = await CatalogModel.findOne({ sellerId: seller_id });
+
         if (!userExist) {
             return res.status(400).json({
                 message: "No users found, please register before ordering something."
@@ -60,7 +62,7 @@ router.post('/create-order/:seller_id', decodeToken, async (req, res) => {
         if (!sellerExist) {
             return res.status(401).json({ message: "Seller doesn't exist or do not have an itinerary." });
         }
-        
+        // fetching the required list details from catalog (name, price)
         const orderedItems = [];
         const unavailableItems = [];
 
@@ -72,14 +74,14 @@ router.post('/create-order/:seller_id', decodeToken, async (req, res) => {
                 unavailableItems.push(itemName);
             }
         });
-
+        // checking if required items is actually sold by that seller
         if (unavailableItems.length === itemsList.length) {
             return res.status(400).json({
                 message: "Seller do not sell the following items: " + unavailableItems.join(", "),
                 sellerList: "Choose from this list:\n" +sellerExist.products,
             });
         }
-
+        // creating new entry if order doesn't exist with the seller
         let orderExist = await OrderModel.findOne({ buyerId: userId, sellerId: seller_id });
         if (!orderExist) {
             orderExist = new OrderModel({ buyerId: userId, sellerId: seller_id, itemsList: orderedItems });
@@ -89,7 +91,7 @@ router.post('/create-order/:seller_id', decodeToken, async (req, res) => {
                 note: "Seller does not sell some of the items: " + unavailableItems.join(", ")
             });
         }
-
+        // updating the existing order list with same seller
         orderExist.itemsList.push(...orderedItems);
         await orderExist.save();
         res.status(200).json({
