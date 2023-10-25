@@ -1,6 +1,7 @@
 @E-Commerce Backend API :-
 
 => Structure :
+
     -> Packages used    : Express, Mongoose, Bcrypt, UUID
     -> Dev Dependencies : Nodemon
 
@@ -22,6 +23,7 @@
 
 
 => Instructions to deploy in your local machine :
+
     * Clone the repository into the local machine
     * Open the repository in VS Code
     * Open Terminal, and type "npm install" or "yarn install" (All the Packages will get installed)
