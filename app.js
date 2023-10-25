@@ -2,7 +2,8 @@ const express = require('express');
 const app = express();
 const { dbConnect } = require('./database/dbConnect');
 const auth = require('./routes/auth');
-const public = require('./routes/public');
+const buyer = require('./routes/buyer');
+const seller = require('./routes/seller');
 
 async function startServer() {
     try {
@@ -13,7 +14,8 @@ async function startServer() {
         app.use(express.json());
         
         app.use('/api/auth', auth);
-        app.use('/api', public);
+        app.use('/api/buyer', buyer);
+        app.use('/api/seller', seller);
         
         
         app.listen(5000, () => {

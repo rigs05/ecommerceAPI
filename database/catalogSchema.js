@@ -16,18 +16,6 @@ const CatalogSchema = new Schema ({
             required: true
         }
     }]
-    /* products: {
-        items: {
-            type: String,
-            required: true
-        },
-        price: {
-            type: Number,
-            required: true
-        },
-        // type: Object,
-        // required: true
-    },*/
 })
 
 const CatalogModel = model('catalogs', CatalogSchema);

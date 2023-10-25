@@ -3,13 +3,11 @@ const { Schema, model } = require('mongoose');
 const orderSchema = new Schema ({
     buyerId: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
     sellerId: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
     itemsList: [{
         item: {
