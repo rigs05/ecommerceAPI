@@ -4,6 +4,7 @@ const { UserModel } = require('../database/userSchema');
 const { OrderModel } = require('../database/orderSchema');
 const { CatalogModel } = require('../database/catalogSchema');
 const decodeToken = require('../controller/tokenValidation');
+const util = require('util');
 
 
 // Fetch list of sellers
@@ -13,14 +14,15 @@ router.get('/buyer/list-of-sellers', decodeToken, async (req, res) => {
         if (sellersList.length == 0) {
             return res.status(401).json({ message: "No sellers found." });
         }
-        sellersList.map((seller) => {
-            const list = {
-                name: seller.name,
-                id: seller.userId
-            };
-            
-            res.status(200).json({ message: "Data found.", list: list });
+        const list = await sellersList.map((seller) => {
+            if (seller) {
+                return {
+                    name: seller.name,
+                    sellerid: seller.userId
+                } 
+            }
         });
+        res.status(200).json({ message: "Data found.", list: list });
     } catch (err) {
         console.log(err);
         res.status(500).json({ error: "Internal server error." });
@@ -31,12 +33,12 @@ router.get('/buyer/list-of-sellers', decodeToken, async (req, res) => {
 router.get('/buyer/seller-catalog/:seller_id', decodeToken, async (req, res) => {
     try {
         const { seller_id } = req.params;
-        const sellerExist = await CatalogModel.findOne({ userId: seller_id });
+        const sellerExist = await CatalogModel.findOne({ sellerId: seller_id });
         if (!sellerExist) {
-            return res.status.json({ message: "Seller doesn't exist or do not have an itinerary." });
+            return res.status(400).json({ message: "Seller doesn't exist or do not have an itinerary." });
         }
         const items = sellerExist.products;
-        res.status.json({ message: "Seller found, here's the items he sells.", data: items });
+        res.status(200).json({ message: "Seller found, here's the items he sells.", data: items });
     } catch (err) {
         console.log(err);
         res.status(500).json({ error: "Internal server error." })
@@ -49,28 +51,58 @@ router.post('/buyer/create-order/:seller_id', decodeToken, async (req, res) => {
         const { seller_id } = req.params;
         const { userId, itemsList } = req.body;
         const userExist = await UserModel.findOne({ userId: userId });
-        const sellerExist = await CatalogModel.findOne({ userId: seller_id });
+        const sellerExist = await CatalogModel.findOne({ sellerId: seller_id });
         if (!userExist) {
-            return res.status.json({
+            return res.status(400).json({
                 message: "No users found, please register before ordering something."
             });
         }
         if (!sellerExist) {
-            return res.status.json({ message: "Seller doesn't exist or do not have an itinerary." });
-        } else if (!(sellerExist.products == itemsList)) {
-            return res.status.json({
-                message: "Seller do not sell the given items list, Choose from this given list.",
-                List: sellerExist.products
+            return res.status(401).json({ message: "Seller doesn't exist or do not have an itinerary." });
+        }
+        
+        const orderedItems = [];
+        const unavailableItems = [];
+
+        itemsList.forEach((itemName) => {
+            const availableItems = sellerExist.products.find(oneItem => oneItem.item === itemName);
+            console.log(availableItems);
+            if (availableItems) {
+                orderedItems.push({ item: itemName, price: availableItems.price });
+            } else {
+                unavailableItems.push(itemName);
+            }
+        });
+        console.log(orderedItems);
+        console.log(unavailableItems.length === itemsList.length);
+
+        if (unavailableItems.length === itemsList.length) {
+            return res.status(400).json({
+                message: "Seller do not sell the following items: " + unavailableItems.join(", "),
+                sellerList: "Choose from this list:\n" +sellerExist.products,
             });
         }
-        const newOrder = new OrderModel({ userId, seller_id, itemsList }).save();
+
+        let orderExist = await OrderModel.findOne({ buyerId: userId, sellerId: seller_id });
+        if (!orderExist) {
+            orderExist = new OrderModel({ buyerId: userId, sellerId: seller_id, itemsList: orderedItems });
+            await orderExist.save();
+            return res.status(200).json({
+                message: "Order created successfully, here's the list you ordered: " + orderExist,
+                note: "Seller does not sell some of the items: " + unavailableItems.join(", ")
+            });
+        }
+
+        orderExist.itemsList.push(...orderedItems);
+        await orderExist.save();
         res.status(200).json({
-            message: "Order created successfully, here's the list you ordered.",
-            data: newOrder
+            message: "Order updated successfully.",
+            unordered: "Some items were not available with seller: " + unavailableItems
         });
+
     } catch (err) {
         console.log(err);
-        res.status(500).json({ error: "Internal server error." })
+        res.status(500).json({ error: "Internal server error." });
     }
 })
 
@@ -80,36 +112,51 @@ router.post('/buyer/create-order/:seller_id', decodeToken, async (req, res) => {
 router.post('/seller/create-catalog', decodeToken, async (req, res) => {
     try {
         const { seller_id, items } = req.body;
+        // console.log(req.headers);
+        // console.log(req.body);
+        // console.log(typeof(items));
         const verifySeller = await UserModel.findOne({ userId: seller_id, userType: 'seller' });
+        // console.log(verifySeller);
         if (!verifySeller) {
-            return res.status.json({ note: "The user is not a seller." });
+            return res.status(400).json({ error: "The user is not a seller." });
         }
-        const sellerExist = await CatalogModel.findOne({ sellerId: seller_id });
-        console.log(typeof(items));
+        let sellerExist = await CatalogModel.findOne({ sellerId: seller_id });
         if (!sellerExist) {
-            new CatalogModel({ seller_id, items }).save();
+            sellerExist = new CatalogModel({ sellerId: seller_id, products: items });
+            await sellerExist.save();
+            return res.status(200).json({ message: "Catalog created successfully." });
         }
-        sellerExist.products.append(items);
+        sellerExist.products.push(...items);
+        await sellerExist.save();
+        res.status(200).json({ message: "Catalog updated successfully." });
     } catch (err) {
         console.log(err);
     }
-
 })
 
 // Retrieving the list of items ordered by buyer
 router.get('/seller/orders', decodeToken, async (req, res) => {
     try {
         const { seller_id } = req.body;
-        const orderExist = await OrderSchema.find({ sellerId: seller_id });
+        const orderExist = await OrderModel.find({ sellerId: seller_id });
         if (orderExist.length == 0) {
-            return res.status.json({ message: "No pending orders." });
+            return res.status(400).json({ message: "No pending orders." });
         } else {
-            orderExist.map((order) => {
-                return {
-                    Buyer: order.buyerId,
-                    Items: order.itemsList
+            const ordersList = await orderExist.map((order) => {
+                if (order) {
+                    const items = order.itemsList.map((item => {
+                        return {
+                            item: item.item,
+                            price: item.price
+                        }
+                    }))
+                    return {
+                        Buyer: order.buyerId,
+                        Items: items,
+                    }
                 }
             });
+            res.status(200).json({ message: "You have some orders: ", data: ordersList });
         }
     } catch (err) {
         console.log(err);

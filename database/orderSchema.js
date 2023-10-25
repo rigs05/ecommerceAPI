@@ -11,12 +11,18 @@ const orderSchema = new Schema ({
         required: true,
         unique: true
     },
-    itemsList: {
-        type: Object,
-        required: true
-    }
+    itemsList: [{
+        item: {
+            type: String,
+            required: true
+        },
+        price: {
+            type: Number,
+            required: true
+        }
+    }]
 })
 
-const OrderModel = model('order', orderSchema);
+const OrderModel = model('orders', orderSchema);
 
 module.exports = { OrderModel };

@@ -6,12 +6,30 @@ const CatalogSchema = new Schema ({
         required: true,
         unique: true
     },
-    products: {
-        type: Object,
-        required: true
-    },
+    products: [{
+        item: {
+            type: String,
+            required: true
+        },
+        price: {
+            type: Number,
+            required: true
+        }
+    }]
+    /* products: {
+        items: {
+            type: String,
+            required: true
+        },
+        price: {
+            type: Number,
+            required: true
+        },
+        // type: Object,
+        // required: true
+    },*/
 })
 
-const CatalogModel = model('catalog', CatalogSchema);
+const CatalogModel = model('catalogs', CatalogSchema);
 
 module.exports = { CatalogModel };
