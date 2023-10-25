@@ -3,7 +3,6 @@ const router = express.Router();
 const { UserModel } = require('../database/userSchema');
 const { v1 } = require('uuid');
 const bcrypt = require('bcrypt');
-// const saltRounds = 10;
 
 // Register
 router.post('/register', async (req, res) => {
