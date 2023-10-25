@@ -27,6 +27,7 @@
     * Clone the repository into the local machine
     * Open the repository in VS Code
     * Open Terminal, and type "npm install" or "yarn install" (All the Packages will get installed)
+    * In terminal, start MongoDB server using "mongod" command
     * Use "nodemon" or "node app.js" to run the localhost (PORT is 5000)
     * Use POSTMAN application, put the URL ( e.g. localhost:5000/api/auth/login )
     
