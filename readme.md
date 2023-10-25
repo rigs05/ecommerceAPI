@@ -32,7 +32,9 @@
     
     *** IMPORTANT ***
     
-    ALL THE URLs (except the /register and /login) WILL WORK ONLY WHEN THE TOKEN GENERATED DURING LOGIN WILL GET PASSED INTO THE HEADERS AS "auth <generated_token>"
+    ALL THE URLs (except the /register and /login) WILL WORK ONLY WHEN THE TOKEN GENERATED DURING LOGIN WILL GET PASSED INTO THE HEADERS AS:
+    key: "auth"
+    value: "token <generated_token>"
 
     This is done to verify that it is logged-in person who is querying the database.
     
